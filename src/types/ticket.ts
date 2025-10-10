@@ -7,9 +7,9 @@ type Author = {
 export type Ticket = {
   id: number;
   title: string;
-  paragraph: string;
+  paragraph?: string;
   image: string;
-  author: Author;
-  tags: string[];
+  author?: Author;
+  tags?: string[];
   publishDate: string;
 };

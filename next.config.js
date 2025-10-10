@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export', // <-- this makes it static (needed for GitHub Pages)
-  images: { unoptimized: true }, // disable next/image optimization
-  basePath: '/tumen-front', // <-- your repository name here
+  output: 'export',
+  basePath: '/tumen-front',
   assetPrefix: '/tumen-front/',
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

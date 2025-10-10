@@ -36,7 +36,8 @@ const TicketsTable = () => {
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/tickets');
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${backendUrl}/lottery/recent`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch tickets');

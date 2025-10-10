@@ -66,8 +66,8 @@ const LotteryModal = ({ isOpen, onClose }) => {
       setError(null);
       
       try {
-        // Using Next.js API route to avoid CORS issues
-        const response = await fetch(`/api/search/${phoneNumber}`, {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://localhost:3000';
+        const response = await fetch(`${backendUrl}/search/${phoneNumber}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
