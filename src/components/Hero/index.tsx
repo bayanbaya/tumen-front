@@ -66,7 +66,7 @@ const LotteryModal = ({ isOpen, onClose }) => {
       setError(null);
       
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://http://103.50.205.63:3000';
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://103.50.205.63:3000';
         const response = await fetch(`${backendUrl}/search/${phoneNumber}`, {
           method: 'GET',
           headers: {
