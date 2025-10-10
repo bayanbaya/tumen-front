@@ -36,7 +36,7 @@ const TicketsTable = () => {
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://localhost:3000';
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://http://103.50.205.63:3000';
       const response = await fetch(`${backendUrl}/lottery/recent`);
       
       if (!response.ok) {
