@@ -29,6 +29,7 @@ nextConfig.rewrites = async () => {
     return [
       { source: '/api/search/:path*', destination: 'http://localhost:3000/search/:path*' },
       { source: '/api/lottery/:path*', destination: 'http://localhost:3000/lottery/:path*' },
+      { source: '/api/invoice/:path*', destination: 'http://localhost:3000/invoice/:path*' },
     ];
   }
   return [];

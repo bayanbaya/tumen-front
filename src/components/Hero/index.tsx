@@ -123,11 +123,11 @@ const LotteryModal = ({ isOpen, onClose }) => {
         {/* Modal content */}
         <div className="text-center">
           <div className="mb-6">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+            {/* <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
               <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
-            </div>
+            </div> */}
             <h3 className={`text-2xl font-bold text-gray-900 ${lobster.className}`}>
               Сугалаа шалгах
             </h3>
@@ -284,6 +284,11 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
   const [isValid, setIsValid] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(null);
+  const [isLoadingPurchase, setIsLoadingPurchase] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const [checkResult, setCheckResult] = useState<any>(null);
 
   const handlePhoneChange = (e) => {
     const value = e.target.value;
@@ -293,12 +298,38 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (phoneNumber.length === 8 && selectedAmount) {
-      setIsSubmitted(true);
-    } else {
+    if (!(phoneNumber.length === 8 && selectedAmount)) {
       setIsValid(false);
+      return;
+    }
+
+    try {
+      setIsLoadingPurchase(true);
+      setPurchaseError(null);
+
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://localhost:3000';
+      const onGhPages = !!process.env.NEXT_PUBLIC_BASE_PATH;
+      const endpoint = onGhPages ? `${backendUrl}/invoice/create` : '/api/invoice/create';
+
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: selectedAmount, phone_number: phoneNumber })
+      });
+
+      if (!resp.ok) {
+        throw new Error('Төлбөр үүсгэхэд алдаа гарлаа');
+      }
+
+      const data = await resp.json();
+      setInvoiceData(data);
+      setIsSubmitted(true);
+    } catch (err: any) {
+      setPurchaseError(err.message || 'Алдаа гарлаа');
+    } finally {
+      setIsLoadingPurchase(false);
     }
   };
 
@@ -307,14 +338,38 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
     setIsValid(true);
     setIsSubmitted(false);
     setSelectedAmount(null);
+    setInvoiceData(null);
+    setPurchaseError(null);
+    setIsCheckingPayment(false);
+    setCheckResult(null);
     onClose();
+  };
+
+  const handleCheckPayment = async () => {
+    if (!invoiceData?.invoice_id) return;
+    try {
+      setIsCheckingPayment(true);
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://localhost:3000';
+      const onGhPages = !!process.env.NEXT_PUBLIC_BASE_PATH;
+      const endpoint = onGhPages
+        ? `${backendUrl}/invoice/${invoiceData.invoice_id}/check_payment`
+        : `/api/invoice/${invoiceData.invoice_id}/check_payment`;
+      const resp = await fetch(endpoint, { method: 'GET' });
+      const data = await resp.json();
+      console.log("data->", data)
+      setCheckResult(data);
+    } catch (e) {
+      setCheckResult({ error: 'Шалгах үед алдаа гарлаа' });
+    } finally {
+      setIsCheckingPayment(false);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative mx-4 w-full max-w-4xl rounded-2xl bg-white p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto">
+      <div className="relative mx-auto my-6 w-full max-w-4xl rounded-2xl bg-white p-4 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           onClick={handleClose}
           className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
@@ -325,19 +380,21 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
         </button>
 
         <div className="text-center">
-          <div className="mb-6">
-            {/* <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-              <svg className="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div> */}
-            <h3 className={`text-2xl font-bold text-gray-900 ${lobster.className}`}>
-              Сугалаа авах
-            </h3>
-            <p className={`mt-2 text-sm text-gray-600 ${gabriela.className}`}>
-              Утасны дугаар болон дүн сонгоно уу
-            </p>
-          </div>
+          {!isSubmitted && (
+            <div className="mb-6">
+              {/* <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                <svg className="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div> */}
+              <h3 className={`text-2xl font-bold text-gray-900 ${lobster.className}`}>
+                Сугалаа авах
+              </h3>
+              <p className={`mt-2 text-sm text-gray-600 ${gabriela.className}`}>
+                Утасны дугаар болон дүн сонгоно уу
+              </p>
+            </div>
+          )}
 
           {!isSubmitted ? (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -373,7 +430,7 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
                 </label>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   {[
-                    { amount: 20200, image: "/images/aztan/20k.png", title: "20,000₮" },
+                    { amount: 100, image: "/images/aztan/20k.png", title: "20,000₮" },
                     { amount: 40400, image: "/images/aztan/40k.png", title: "40,000₮" },
                     { amount: 60600, image: "/images/aztan/60k.png", title: "60,000₮" },
                     { amount: 101000, image: "/images/aztan/100k.png", title: "100,000₮" }
@@ -419,14 +476,14 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
 
               <button
                 type="submit"
-                disabled={phoneNumber.length !== 8 || !selectedAmount}
+                disabled={phoneNumber.length !== 8 || !selectedAmount || isLoadingPurchase}
                 className={`w-full rounded-full px-6 py-3 font-bold transition-all duration-300 ${
                   phoneNumber.length === 8 && selectedAmount
                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 } ${gabriela.className}`}
               >
-                Сугалаа авах
+                {isLoadingPurchase ? 'Үүсгэж байна...' : 'Сугалаа авах'}
               </button>
             </form>
           ) : (
@@ -442,9 +499,9 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
               <p className={`text-gray-600 ${gabriela.className}`}>
                 Таны утасны дугаар: {phoneNumber}
               </p>
-              <p className={`text-gray-600 ${gabriela.className}`}>
+              {/* <p className={`text-gray-600 ${gabriela.className}`}>
                 Сонгосон дүн: {selectedAmount?.toLocaleString()}₮
-              </p>
+              </p> */}
 
               {/* Payment Section */}
               <div className="bg-gray-50 rounded-lg p-4">
@@ -455,28 +512,52 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
                 {/* QR Code */}
                 <div className="flex justify-center">
                   <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <img 
-                      src={`data:image/png;base64,${PAYMENT_SUCCESS_DATA.qr_image}`}
-                      alt="QR Code" 
-                      className="w-32 h-32"
-                    />
+                    {invoiceData?.qr_image ? (
+                      <img
+                        src={`data:image/png;base64,${invoiceData.qr_image}`}
+                        alt="QR Code"
+                        className="w-32 h-32"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 flex items-center justify-center text-gray-500">
+                        {isLoadingPurchase ? 'Уншиж байна...' : 'QR байхгүй'}
+                      </div>
+                    )}
                   </div>
+                  
                 </div>
-                <div></div>
+                <div className="flex flex-col items-center gap-4 p-4">
+                  <button
+                    onClick={handleCheckPayment}
+                    disabled={!invoiceData?.invoice_id || isCheckingPayment}
+                    className={`rounded-full px-8 py-3 text-base sm:text-lg font-semibold text-white transition-all ${
+                      isCheckingPayment || !invoiceData?.invoice_id
+                        ? 'bg-gray-300 cursor-not-allowed'
+                        : 'bg-primary hover:bg-primary/90 hover:scale-105'
+                    } ${gabriela.className}`}
+                  >
+                    {isCheckingPayment ? 'Шалгаж байна...' : 'Төлбөр шалгах'}
+                  </button>
+                  {checkResult && (
+                    <p className={`text-base sm:text-lg font-semibold ${checkResult?.paid ? 'text-green-600' : 'text-amber-600'} ${gabriela.className}`}>
+                      {checkResult?.paid === true ? 'Төлбөр ТӨЛӨГДСӨН' : checkResult?.message || 'Хүлээгдэж байна'}
+                    </p>
+                  )}
+                </div>
                 {/* Bank Payment Options */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {PAYMENT_SUCCESS_DATA.urls.map((bank, index) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 pt-2">
+                  {(invoiceData?.urls || []).map((bank, index) => (
                     <button
                       key={index}
-                      className="flex items-center p-3 bg-white rounded-lg border hover:bg-gray-50 transition-colors"
+                      className="flex items-center p-3 bg-white rounded-lg border hover:bg-gray-50 transition-colors text-left"
                       onClick={() => window.open(bank.link, '_blank')}
                     >
-                      <img src={bank.logo} alt={bank.name} className="w-8 h-8 rounded mr-3" />
+                      <img src={bank.logo} alt={bank.name} className="w-8 h-8 rounded mr-3 flex-shrink-0" />
                       <div className="text-left">
-                        <div className={`text-sm font-medium text-gray-900 ${gabriela.className}`}>
+                        {/* <div className={`text-sm sm:text-base font-medium text-gray-900 ${gabriela.className}`}>
                           {bank.name}
-                        </div>
-                        <div className={`text-xs text-gray-500 ${gabriela.className}`}>
+                        </div> */}
+                        <div className={`text-xs sm:text-sm text-gray-500 ${gabriela.className}`}>
                           {bank.description}
                         </div>
                       </div>
@@ -484,12 +565,16 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
                   ))}
                 </div>
                 
+                {purchaseError && (
+                  <p className={`text-sm text-red-600 ${gabriela.className}`}>{purchaseError}</p>
+                )}
+                
                 
               </div>
               
               <button
                 onClick={handleClose}
-                className={`w-full rounded-full bg-gradient-to-r from-green-500 to-green-600 px-6 py-3 font-bold text-white transition-all duration-300 hover:from-green-600 hover:to-green-700 hover:scale-105 ${gabriela.className}`}
+                className={`rounded-full bg-gradient-to-r from-green-500 to-green-600 px-3 py-1 text-xs sm:text-sm font-medium text-white transition-colors duration-300 hover:from-green-600 hover:to-green-700 ${gabriela.className}`}
               >
                 Хаах
               </button>
@@ -501,51 +586,6 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
   );
 };
 
-// Payment success data structure
-const PAYMENT_SUCCESS_DATA = {
-  "invoice_id": "dc1138f8-7d19-4a10-a399-c40d7e808c48",
-  "qr_text": "0002010102121531279404962794049600250913247396127540014A00000084300010108AGMOMNUB0220iDyo61I1wlFgMtD3seUH52047399530349654031005802MN5919MEIRMENINTYERNESHNL6011ULAANBAATAR62240720iDyo61I1wlFgMtD3seUH7106QPP_QR7815210379972314735790222800201630437CD",
-  "qr_image": "iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAABmJLR0QA/wD/AP+gvaeTAAAfLElEQVR4nO3da3hU1bkH8P9MEjQkQUGBAIVwqY0XsNgUrHgHNVoBeygIrT7qkUtaWi9oPZjW42MrVGKLiLUqpFy0pyq0WIFzRJCLXEQFL3hBKRBIUARRUSAXQpLJ+YBYMpnZe69Z79p71uT/ex4/OHvvtdfsmXlZ+8161w41NjY2gojIAuGgO0BE5BUDFhFZgwGLiKzBgEVE1mDAIiJrMGARkTUYsIjIGgxYRGQNBiwisgYDFhFZgwGLiKzBgEVE1mDAIiJrMGARkTUYsIjIGum6DYRCIYl+eBK9dFf0ud22u7UXzal93bZVzqXaF90lznSvqxOda+7l3Krtq5C8DrHaU2lbty/S70Xn3Co4wiIiazBgEZE1GLCIyBraOaxokkvES9/Hq+bAnPZ3a0s6J6DSl2g6+TEvfZGUTDkrXTp5ItXvl/Rn4ufvWAVHWERkDQYsIrIGAxYRWUM8hxVNd36IX8fG4tR30/OwVPNrOueS3l9lfpHufCCdXI50/ks196eSh1RpK5H2nPj5G3bDERYRWYMBi4iswYBFRNYwnsMySbruTDIvpduWSn5Ft8bS5NwnlbltidDpu26eULqeT2df3bl4tuAIi4iswYBFRNZgwCIia1idwwoyH6J7LpM1bqrXRTW/odJ36fpON5J5IVU6c+9M18WmCo6wiMgaDFhEZA0GLCKyhvEclp/30qbPlUx5J5V9VXNSJtfHkq4V1Hnvurk7yXX7pWtTJY9PpnwYR1hEZA0GLCKyhvgtoZ9L0kqXoKjc+pguf3E6d/Tx0tMYJKdsSN/K6PZdp6TJjeTUgqD7FuTS0k44wiIiazBgEZE1GLCIyBqhxmT6m6WmIB9z7nephJ9lHSaX3TH9yHTJ9k3mKXVzUtLtJyuOsIjIGgxYRGQNBiwisobxHJbJ+3zp+3iVvJP0vBadHJjpfEYyzcnR/bqqzBGTLt1RyYHq9sXteNXz6/RFMp/LERYRWYMBi4iswYBFRNbQriX089Hibkw/qv749oN+rJJkvZ4byTlmkrWAXs6tssy133OhdPomvRy40/mDrKmMxhEWEVmDAYuIrMGARUTW8H0elo4g7+Ol++LnUr9+z1eTrNdTJZk/0Z0757a/07HSa7vpfAek15XTwREWEVmDAYuIrMGARUTWMD4Py8/5Sqbn9Ejem0vWFppeU8rPnJTu90nlurl9/m5tmayx9Dsn6vTedH8XrCUkohaJAYuIrMGARUTW0M5hmcyfmK5TNP14cKe2dPNnJtdWUt0uWa9nOg+p0lY03XycSl+DftakU64vSBxhEZE1GLCIyBoMWERkDfF5WJLzQUw/b8+NyhweXTr5E+nrpNo3yXOpfkZ+PncwSJLzz7xQ+R36WVvIERYRWYMBi4iswYBFRNbQzmFFk6wF050PpHvv7Oc8Gbf9JduOppuD8HMulOq5dWrkVEk+l9D0MxHd6iZ1mMxpcYRFRNZgwCIiazBgEZE1Al/TPZnX3Fa595aej+bWvsqxKm154ecz7XTO7ba/6esgeT7pNdx15pwFWaPLERYRWYMBi4isoX1LKP0IKae2/X70kUrZUDTTZUQml5dxo/LeTN6aJMLko7bc2nPqi+mUgiqd0hyTOMIiImswYBGRNRiwiMga4qU50SRzMbr5DZOPWJfOb5hcTleyLMjt/MlWJiRZ8qRb7iK5hIvJ6SBBlmpF4wiLiKzBgEVE1mDAIiJrGM9hRUvm0gmd85suA5Jcrtn0PBrJ+UVu/Lxu0UzOT9LN/UXTybf5mY91wxEWEVmDAYuIrMGARUTWEF9eRnI+SNB1Zjr5D9N9T9aaOLf9/ZxH5eV8frWdSPuSdHKspr8vKjjCIiJrMGARkTUYsIjIGuLzsHQff+W0ze+cVjTJ9bCiSa/lpcJkfs3POTqxjjdZkxkt6Lymyrn8XJpcEkdYRGQNBiwisgYDFhFZQ3xNd925KZK1hTY9akvysUum15NXYfpRbG7nU1mry3Te0M+1zyWfd5BM14EjLCKyBgMWEVmDAYuIrOH7o+r9zBPpMrnOtZ9MPnfQbf8g687c2jddp2hy7pPJXLEq6dpVJxxhEZE1GLCIyBoMWERkDe1aQj/n2Zieh6XTdjTT10Xy+XqS53JrXzqXonPdgswrupGcR5XIdp2+mcQRFhFZgwGLiKzBgEVE1tDOYbndG+vUZ+nWdknP8VGZ0yP9XDkdftZUSjOZ25N+n0HmjUzWQeq2Lfnd5giLiKzBgEVE1ki60hzJc0WTLKUI+tFHOss1B7kcs+lyFp2+mp6qYnK6R5DLM/u5XBFHWERkDfGHUFDqC4fDKCgoQEFBAXr37o38/Hzk5uaic+fOyMnJQUZGBgCgrq4OlZWV2L17N/bu3YutW7cG3HOyHW8JHY7nLeG/t3fs2BHDhg3D4MGDcfHFFyMrK0upv17xltBbX6T7psPPW0LxEZbuY51MLi8jGdCkpy3olL9If1mPbQ+HwxgyZAiWLFmCwsJCY9MZGhsbsXTpUsycORPhcBiRSCRuXyXLikwvL6PyQ9b90ZucXqT73RVdZkd6hGWy3s/0/CCTActNMgWs9PR0jBkzBhMnTkT37t2V+qWrvLwcJSUlmD17No4cOdJsu8m5c9IBy60vtoy4TP5jq4oBK8H2UzVgjRgxAiUlJejRo4dSf6Tt3LkTxcXFmDdvXpPXGbASO1c0BqxjDTJgJSTogNWjRw/MmDEDl19+uVI/TFuxYgWKiopQVlYGgAEr0XNFY8A61qDghdYtATA5/8j0XCaTiczotm6++WZMnz4d2dnZCbV34GAlvvzqIL74Yj/q6hvw+f6DiEQa0DrzRLQ7KRsZrVqh/alt0b79KUgLq8+kqaqqwoQJE1BaWqp8rNN1lJ4T5ud8Nd1zm/yuu/WNAcvj/gxYTdvKzMxEaWkprrvuOqXjvzpwCJs/2Ia33tmCF1ZtwosffurtwEbgVz86B+f1Owtn9/4OenTvqhTAnnnmGYwePRo1NTWej2HA8tY+A9bXGLDc25JoX8WxaQoLFy7Eueee6+mYuvp6bHrnQyxashaT5r+e8LmPd/l3TsWYn16OSy7shw7tT/F0zMaNGzF06FDs3bvX0/4MWN7aZ8D6GgOWe1sS7avIy8vDqlWr0LNnT9d96+rqsHb9m/jDYwvw4of7Ej6no0ZgatEgjBxWiC6dO7ruvmPHDgwcOBAVFRXuTTNgeWqfAetruj9cHSaTopLHxjo+msoPz6mtbt26efqhA8Db73yI+6f+Ff/ctNvT/toijZj1Xz/CiGFXIie7tadDdP5RUr3mqiST7Kb/QXTrj5/ndsKAdZxUD1gdO3bE+vXrXUdWhyqrMXPO3/Gr0pWO+5lyUfe2mD6pCH3PPsN1306dOjW5PWTA8sbWgMXi5xYiMzMTCxcudA1W5RUfY9SY+wILVgCwpvxLnHP9FDz59CLU1dc77rto0SJkZmb61DMKGgNWC1FaWuqaYN/45nv4wbX34YUPPP7Vz7CbpizA76bMQGVVddx9+vXrh9mzZ/vYKwqS7xNHdRJ4fg57Yx2vk7BV7Ztbe063NtFtjx49GrNmzXJsf/W6jbhk/KNKffLLuIH5+OOk25CTHb/gety4cSgtLRX9Y4Xk5EvVc+uSTIwn1ftiwPJ+vK0Bq7Ky0nFS6PrX3sL5Y6cD/qUXlY0bmI+pk29HdlbsZHxVVRX69u2Lbdu2NXmdAcvbuW0JWLwlbAGcgtV7m7fi/HHJHawAYObKf6Fk2py4Oa2srCzMmDHD516R3zjCUjje1hFWPHv3fY6rfvrf2LQvfo4o2TxZ/GPc8JOhnvfnCMvbuVvsCKuxsbHJfzpCoVCT/3RJt+fUdvR1kLwu0eeLtS0jIwM7d+6Me3xdfT0mPTjLqmAFADc+sACb3t0i0pbb90H3M/Tzt6C7XYXq+5I8N28JU9SYMWMcl4h5Yeka/HnZBz72SM7t9z6BQ5V2BVqSwYCVgsLhMCZOnBh3+77PvsDIe/5qthMGbxNW7/gSf//nUmPtU/LiQyhS0JAhQxxXCp37t8WobYjE3a5q+Pe+hRFDL8QZ+T1x6ilt0fbkNgiHw6iqPowDBw+ivGI3Xtv4Pu7/6xpUN8gEstEPPo/CywagSyf32kNKHYE/hMLPchg/C0TdmCxhWrJkCa688sqY2z7avQfdrro74baPd+tVfTD2xmtw5unfRjjs3t8DBw9h2YpXMOHBBdhd1Xz5Y1VTxw3CHb+8Iea2ZcuWobCw0PF4ye+il+P9LEuLplPqI32ddDBgObAxYHXs2BF79uyJe/yfnngatz6mdzuVl90Kc6aMwcUX9PcUqKJ99vl+lEx7ElMXb9LqBxqBT1dOQ4f27WJujq4zbHY4A5an7ckUsJjDSjHDhg2L+8M4eKgS95S+pNX+BXknY8283+LSi85NKFgBQPtT2+GB+27BE7cP1uoLQkdn6MczfPhwvfYp6TBgpZjBg+MHgTffeh8H6xLPXQ3o2gbPzvg1unXtnHAbx2RkpGPsfw7H47ddrdXOX55+CQ2R2O/J6VqQnYw/l1B1WGxy2KzbF5XJdNJ9kRh2L1/9RuIHRxoxc+ptnhbY8yocCmH0DcOwbcfHeGjxOwm1sexfn6G8/GP06tmt2bbCwkKkpaWhoaHhm9ecrqPft4Aqk39NpjPctvu9tI0TjrBaiOrqGkxZEP/2yc3c4mE46/RvC/boqIyMdEy8/SZ0ODHxfzvf3bw17rZ+/fol3C4lHwasFqJi1yeIJPgPW0FuNn58zRWyHTpOh/bt8Ke7RyR8/Otvxp8AW1BQkHC7lHwYsFqIsp0fJXzsnWN/iGyPSxYn6opBA3BCgkn8Bxduinub0adPH51uUZIxXkuoWkfkVr/lVMNkup5K5djoc0nXrcVqc/ny5XH7s6Mi8XXZzz/vewkf69XJJ7XBf19/QULHNjY0YN/n+2NuKyoqinsdVb8vbvWiqp+x0za3c7nR/b6pfPdU2tLNxXKElUJyc3PjbqvY5e2xWNEGfvsUdO3SKdEuKRnQP/HR0P4vDwj2hJIVA1YK6dw5/nSD1e8kdks4aMCZ8Gu+Y163xKdL1Dgso0ypgwErheTk5MTd9uaWzxJq87SeXRLtjrI2Dv13c6jqsGBPKFkldfGz6RIAnXKFZDxXRkZGzNcjjY3ACYn92+Rn2UVOThbQiCarn/7sstNx6QXnNNmvtq4BN0ye3+S1yur4j6+Pdy2lS2fc2lNpX7ccRvW9qLQvPV9NRVIHLJIRApDwnAYfNTQ0NFuq+YJz++DaYU0Lub88UAlEBawg6/TIP7wlTCF1dXUxXw+FQkA4LaE2K6v9u9U6cOBQs9eyWp/Y7LXaw8371O7k2LeTkThlO2Qn30tz3PZXOdZtfz9XZ5AuSZK+Fbvhkl54al2Z8nHvvL9DtB9OTj4pB6+U3o4dOz/G2+9tx/T/exftY6zEECswZ6THDsjhcDhuCYzpMjKdlUdU9481TUKlfT9v/XVwhNVCdOt8akLHPb70fVTX+DPKysw8EQPOPQfXjxqCqZMn4MhbsxAKhfHahk346OM9qKs7+sScfZ990ezY9qfGXmKGUgtzWC3E6ad1BfC68nF1kUa8v3kr+n//bPlOuQiHw1jy0npMmn+0363CIYy9/ExU1UQt/tcItG17ku/9I/9xhNVCdM9LfHrC/OdXCPYktvc2b8WDD8/B5g+3fZN3qqqqxqRn/x1kj0Qa8eelmzF3TdOHpV7dJ9fxqdCUOowHLNVyGLdyCJVSCt1SHlPlBV7olhFFy9NYw2rqok14/4Nt7jsmqCESwYw5z2Pi7JfRe+QkDL/pHixdvg4r12zw9A394SV942675ZZb4n4noumWw7hx+kwly3wS6YvK70zlfUn09XgcYbUQXTrn4rLTEstjAcCkqU/hcK3+OuyxrFm7AX9etvmb///npt248o5SDJ04x9Pxfb97etxtb7yhsQYYJR0GrBYiFAJGXXN+wsfP27gLj5U+i4jwfK6KXbtx491/8bRv95xW+P2NFzZ5LQTgrDNOi7l/TU0NNm5MfA0wSj4MWC3Iheed476TgztnrsDf5i0WDVrP/+8qfFTVdJrCme0yY+57789/iOI7x+CzVQ9jwaTrMbBXO9z30wE4qU12zP3Xrl3bZLVRsp/2U3Ok5w8d357qHC4/l27VnW/mZ1+PiTQ24rox9+LZjbuUjz3e1HGDMH7sKJx4QiutdgCgrq4ef3xkLn795FoAQLfsVli/YDJ2796Lu343C2vKvwIApIVD2LP8oSbTF+rq6nGosgrtHP5CGGQ5jOQ8LN2+uZ1P53fr5xwvjrBSULwvSDgUwrgb9R/McOfMFbjx5/cnlIj/ePdevLVpM7aVVQA4ukTyXbfdhN/fdBEA4NmHf4EunTqg//fPxuL/mYypYwcBAJ769Yhmc60yMtIdgxWlHo6wHI7XObfq/pJ9ffHFF+M+SLW29giu/sndWLG9+eTLRNwxpC9G/scg9D7rO2id2byMBgBqDtfigy3bsXjJGvz2mde+ef3RX16F8WNHIRQC6hsa8M67W1BwzlnNjn/z7c04I78XWsco03HDEZa389kywmLAcjhe59yq+0v2ddiwYXjuuefibl+9biMuGf+o0vncpIdDGF94Fvqc2RNtso/moGqP1GPT+2WYueRdVNbHrul7aXoRLrt0gGPbK1e/htff2IyfjR6Btie3UeoXA5a387WYgNWsQYP1e27HuvGz9ks6gKn0LS0tDWVlZejevXvM7fUNDbj1rj/g8eUfem7TlLat0vDWc/eje7fYE1vLK3bj3BH3Yt/hevTvnIOH7rsZ5//AecnmXbt2oWfPnoEn3FU+U+nfjW4todPAwY98azzMYaWgSCSCkpKSuNvT09Iw8fYbkJUW/Mf/5ZEG/Ob+GaiKsZ7VF/u/wi8mTse+w0drCDd8cggXjJuOxUtedmyzpKQk8GBFZgT/jSUjZs+ejZ07d8bdntetM+ZNucnHHsX39OsVmDnnH81eX7biFbzwwadNXhvcOxeXXtQ/blu7du3CrFmzxPtIyYEBK0UdOXIExcXFjvtcdflFeOCmi33qkbM7ZizHy2s3NHnt2mFX4pFfFH7z/91zWuHRKbciOyv+I8eKi4tRW1trrJ8ULPEclusJDSb7dO/rdXIOkn9s8MJr/mP58uUYNGhQ3O3VNYdx528exhNJkM/qlJmO1xdMRtdv/fvpPw0NEcyc83eMf+QFbJx7F77/vd5xj1+1ahUGDhzY5DWnzyXoPKRKnkh6OedoOmvB+YkBK8HttgSsXr16Yfv27Y5tHTxUiQnF0zB7jfN+frjh/J54YtrdyDzxhG9ei0Qi2FZWgfzTesQ9rrq6Gn379sW2bU3nhjFgeWNLwOItYYorK3NfZbRNTjamPTABP7vsDB965OypV3Zg1pMLmrwWDocdgxUA3HHHHc2CFaUejrAS3G7LCCt6XyfVNYfxyONPo3juaqW+mLB2xq244LwCT/vOnz8fI0eOjLmNIyxvbBlhWT0PS7VtN5JfEtNfMNVzZ2ZmYvXq1ejXr5/jsZFII5a8tAYj756LqobgHuDQq80JWPOPSeic20GrHckfnsm5c6rn0u2bG9HJnoLXhbeELURNTQ2GDh2KHTucHyoRDodwdeHF2LxoMn4e4C1i2cFa3DNpBmoNrcFFduIIy+HcqTTCOiYvLw/l5eWe2mloaMC6V9/C/Q89I1Z7qOqJ265G0ehrEz6eI6zY290k6wiLAcvh3KkYsGJtd1NbewSvbtiEJ+YuxjzNpWmindIqDYO+2wXzHdpd/5cJOK9//GWQnTBgxd7uJmUDlskLK1kP5aVvbiTrHHXfi8q5Yp07NzcXixYtcs1pHS/S2IjtZRVY9+rbeGbhOizf+rnSeY8Jh4Di4f0x8KIC9C84G1lZrbGj/CO8vGYDfvPYEnxa03RBv96nZmL5s5PRscMprm1Lf+ZObUcLNBntY4DTbVsHA5aCVApYAJCZmYnZs2dj1KhRSscfO+cne/ahfNdulFfsxr+2f4xdn3yOJ9eUAUfqj0alIxH84KwOGNCnK3p0y0WPvC7o2eNbyOvaGa1bx15VtLrmMDa++R6efW5Fk8msYy/Nx0X983D9ddd5em/H91MKA5ZM2zoYsBSkWsA6ZuzYsZg2bRqysmQelXWsP7q3wRUffYJVazagpPRFbNlfA3xZhsaP1jkew4B1VKoGLP6VkFBaWoq+ffti5cqVIu2FQnKPJsvrfBLS978KfLIBSGsVaFCg4BlPupucECedNFU53vQIKsh/8crLy+OupZVsdEY90iMmyaS87ohJlU5f/Ezoc4RFzeTn52P8+PHYtUv2L4JEujjCSvD4VB5hHds/LS0N11xzDYqKinDFFVc4HhMUjrBi76/KlhEWA1aCx7eEgHW83NxcDB8+HIMHD0ZhYWGMo4LBgBV7f1W2BKz0hI/8muqFVems9Iek+8M+/v9V9o21v1vf/Azsqp9heno6+vXrh4KCAvTp0wf5+fnIzc1Fp06dkJOTg3D4aKYhEong0KFD2LNnDz799FNs2bIFRUVFnvvtpa/RVK6j7g/PjU6A0mnLC9N/UTclpZ6a40byhyv9Z2TV/VWukxs//zU3PbXEz1GNbt9UjnVrS/p4lX+cmXQnIoqBAYuIrGH8llBnmG16ZrHkrZBuDkrrLyeGb+lM5jOkbzeiSd5KS+e4dPiZgjCZ0FfFERYRWYMBi4isYXxNd52/6kj/qV/yFiDIOWBufZG+HfWz6Fd6Hp/k90uVZDrE9DysaJJ/0VRp2w1HWERkDQYsIrIGAxYRWUO8NCeazp+pdXMKJnM7uiVJydQXVaZLWnToXEfpqQIq/C6NcbtOkrWrkjjCIiJrMGARkTUYsIjIGto5rGjS+RGT/Cyf0e2L0/7S/TY510mXbv5E5bqpntuNTv7WTTLPV2NpDhG1SAxYRGQNBiwisoZ2Dkt6TobJmjmTTPfF5HvRXZ43yNyMKp0luk3WOUov+aM7L9Bpm585q2gcYRGRNRiwiMgaDFhEZA3xeVgmH09lem6KTtvR/FzXSTdPqHqdVeYrmb4Obn3zc+lpyesYZL2eKj/XS+MIi4iswYBFRNZgwCIia4jnsFTpzE3RrQVzy1FIPpJMl851ksxJJXK8Stt+rmVu8inSXuh8hqbzuyp9UW2ba7oTUYvAgEVE1mDAIiJriD+qPprOWkx+5zeCXA8rWpDzbCTnmCXbXDqdeYBubUn2Nej1sHT64tY3HRxhEZE1GLCIyBoMWERkDe0clusJfFyzKpnyHdL5L8mcg+k13lWYnkuXTLkaP9d683OtLj9zuxxhEZE1GLCIyBoMWERkDeO1hJJrTunWxOnur7MeuOq5/bxu0YJcD8upLS9Mri8fTfIzlv5uq9KZS8f1sIiIYmDAIiJr+F6a4+dSJEH2TZXk7an0ssImS6KSeSqK6v6St7t+P8JOsi9cXoaICAxYRGQRBiwisobxaQ06+Q/pKf+SuRnTS9uotKe7vK4bnaWlTU4d8dIXnZITN0F+n6Tzkip9C3IKBkdYRGQNBiwisgYDFhFZQzuHpXovrVM6Yfrx3SZzM9FMzmVyE3TuRlKQS91Ifj+lv+tux6ts93tOmBOOsIjIGgxYRGQNBiwiskbgtYQ6y1r4Wdvl1jenfb30RXJ5XZVjvfTNT0HWi5pe+kaF3/V7fn6/dHCERUTWYMAiImswYBGRNcRrCSVzEMn2WHOTjz5S7avKPBndvukwfR2CJPn9cprz5+Vc0jktle+XnzlQjrCIyBoMWERkDQYsIrKG+DwsP+emRDO9rrrkOk8m55QFvbaSLeuD+7kuuiqT+Vcv+zsdKz33UgVHWERkDQYsIrIGAxYRWcP4mu7RJB9z7ta29PpZknWObiTXJpe+LibX9DY9p8dk7k8nV6PzXfRyLp3raLpGVwVHWERkDQYsIrIGAxYRWcP4mu46+5vOtaieT4d0/s3kuaXbVzmX6fXDVeaI6bat8pnqvk+T33XV5zKY/C5zhEVE1mDAIiJrMGARkTW0c1h+rv+tu2aQG51nAUrPy9JZ+161rWiS+RTdHKfpdfyDJFm/p3u8ZL6NtYRERGDAIiKLMGARkTWMr+muw+8aOZ315nXft2R9lsn1vXX7Fs302vhO7QU9T8/kMwJ0+uLnsao4wiIiazBgEZE1jC8vE/Sw26ltnb7pliu4bZdcElmV6bKQ47m9T+lHmJl8JLsbP5e20emLLpbmEBGBAYuILMKARUTW8H2JZEkmS29itW/yvl/yXNJlHW78XH5XNz+is7yMybIh6SWSk2k5Z0kcYRGRNRiwiMgaDFhEZA2rc1jSjx+SLIdRZTKn4PccHx1+LssTzfQy1iqPajO9zI7JnGk0Li9DRC0SAxYRWYMBi4isYTyHFeSjs6RzMX7mPyRzDtJLl6j03c/HdHnZ7rSv9Gekej4VpnN9OudyWz5cB0dYRGQNBiwisgYDFhFZI9SoeYMZ5GO+3Jicp+Xncsxuxwf5ePdYJK+TLp3cjBuT6z6ZPpfJeVdu5+I8LCJqERiwiMgaDFhEZA3tHBYRkV84wiIiazBgEZE1GLCIyBoMWERkDQYsIrIGAxYRWYMBi4iswYBFRNZgwCIiazBgEZE1GLCIyBoMWERkDQYsIrIGAxYRWeP/Ab5+r9ivFYntAAAAAElFTkSuQmCC",
-  "qPay_shortUrl": "https://s.qpay.mn/1QdFZD4at8",
-  "urls": [
-    {
-      "name": "qPay wallet",
-      "description": "qPay хэтэвч",
-      "logo": "https://s3.qpay.mn/p/e9bbdc69-3544-4c2f-aff0-4c292bc094f6/launcher-icon-ios.jpg",
-      "link": "qpaywallet://q?qPay_QRcode=0002010102121531279404962794049600250913247396127540014A00000084300010108AGMOMNUB0220iDyo61I1wlFgMtD3seUH52047399530349654031005802MN5919MEIRMENINTYERNESHNL6011ULAANBAATAR62240720iDyo61I1wlFgMtD3seUH7106QPP_QR7815210379972314735790222800201630437CD"
-    },
-    {
-      "name": "Khan bank",
-      "description": "Хаан банк",
-      "logo": "https://qpay.mn/q/logo/khanbank.png",
-      "link": "khanbank://q?qPay_QRcode=0002010102121531279404962794049600250913247396127540014A00000084300010108AGMOMNUB0220iDyo61I1wlFgMtD3seUH52047399530349654031005802MN5919MEIRMENINTYERNESHNL6011ULAANBAATAR62240720iDyo61I1wlFgMtD3seUH7106QPP_QR7815210379972314735790222800201630437CD"
-    },
-    {
-      "name": "State bank 3.0",
-      "description": "Төрийн банк 3.0",
-      "logo": "https://qpay.mn/q/logo/state_3.png",
-      "link": "statebankmongolia://q?qPay_QRcode=0002010102121531279404962794049600250913247396127540014A00000084300010108AGMOMNUB0220iDyo61I1wlFgMtD3seUH52047399530349654031005802MN5919MEIRMENINTYERNESHNL6011ULAANBAATAR62240720iDyo61I1wlFgMtD3seUH7106QPP_QR7815210379972314735790222800201630437CD"
-    },
-    {
-      "name": "Xac bank",
-      "description": "Хас банк",
-      "logo": "https://qpay.mn/q/logo/xacbank.png",
-      "link": "xacbank://q?qPay_QRcode=0002010102121531279404962794049600250913247396127540014A00000084300010108AGMOMNUB0220iDyo61I1wlFgMtD3seUH52047399530349654031005802MN5919MEIRMENINTYERNESHNL6011ULAANBAATAR62240720iDyo61I1wlFgMtD3seUH7106QPP_QR7815210379972314735790222800201630437CD"
-    },
-    {
-      "name": "Trade and Development bank",
-      "description": "TDB online",
-      "logo": "https://qpay.mn/q/logo/tdbbank.png",
-      "link": "tdbbank://q?qPay_QRcode=0002010102121531279404962794049600250913247396127540014A00000084300010108AGMOMNUB0220iDyo61I1wlFgMtD3seUH52047399530349654031005802MN5919MEIRMENINTYERNESHNL6011ULAANBAATAR62240720iDyo61I1wlFgMtD3seUH7106QPP_QR7815210379972314735790222800201630437CD"
-    },
-    {
-      "name": "Social Pay",
-      "description": "Голомт банк",
-      "logo": "https://qpay.mn/q/logo/socialpay.png",
-      "link": "socialpay-payment://q?qPay_QRcode=0002010102121531279404962794049600250913247396127540014A00000084300010108AGMOMNUB0220iDyo61I1wlFgMtD3seUH52047399530349654031005802MN5919MEIRMENINTYERNESHNL6011ULAANBAATAR62240720iDyo61I1wlFgMtD3seUH7106QPP_QR7815210379972314735790222800201630437CD"
-    }
-  ]
-};
 
 const Hero = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -601,12 +641,12 @@ const Hero = () => {
                     >
                       🔥 Сугалаа шалгах
                     </button>
-                    <button
+                    {/* <button
                      onClick={() => setIsPurchaseModalOpen(true)}
                       className={`rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm px-16 py-6 text-xl font-bold text-white duration-300 ease-in-out hover:bg-white/20 hover:border-white/50 hover:scale-105 transform transition-all ${gabriela.className}`}
                     >
                       Сугалаа авах
-                    </button>
+                    </button> */}
                 </div>
               </div>
             </div>
