@@ -7,9 +7,10 @@ tumensugalaa.mn, www.tumensugalaa.mn {
   handle @api {
     uri strip_prefix /api
     reverse_proxy {$BACKEND_ORIGIN} {
-      header_up Host {upstream_hostport}
+      header_up Host tumensugalaa.mn  # ← Өөрчлөх
       header_up X-Forwarded-Proto {scheme}
       header_up X-Forwarded-For {remote}
+      header_up X-Forwarded-Host tumensugalaa.mn  # ← Нэмэх
     }
   }
 }
