@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile
       args:
         GH_PAGES: "false"
+        NEXT_PUBLIC_BACKEND_API_URL: ""
     image: tumen-front:web
     container_name: tumen-front-web
     ports:
@@ -13,14 +14,13 @@ services:
       - "443:443"
     environment:
       DOMAIN: ${DOMAIN}
-      EMAIL: ${EMAIL}
       BACKEND_ORIGIN: ${BACKEND_ORIGIN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # хостын 3000 руу хүрэх
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+
 volumes:
   caddy_data:
   caddy_config:
-  
-extra_hosts:
-  - "host.docker.internal:host-gateway"
