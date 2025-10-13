@@ -180,11 +180,11 @@ const TicketsTable = () => {
                 <span className={`text-xs font-bold text-gray-500 dark:text-gray-400 ${gabriela.className}`}>
                   #{startIndex + index + 1}
                 </span>
-                {ticket.is_bonus && (
+                {/* {ticket.is_bonus && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                     🎁 Бонус
                   </span>
-                )}
+                )} */}
               </div>
               
               <div className="space-y-2">

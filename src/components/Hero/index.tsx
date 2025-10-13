@@ -228,7 +228,7 @@ const LotteryModal = ({ isOpen, onClose }) => {
                             {ticket.number}
                           </p>
                         </div>
-                        <div className="text-right">
+                        {/* <div className="text-right">
                           {ticket.is_bonus && (
                             <span className="inline-block px-2 py-1 text-xs font-bold text-yellow-700 bg-yellow-200 rounded-full mb-1">
                               🎁 Бонус
@@ -243,7 +243,7 @@ const LotteryModal = ({ isOpen, onClose }) => {
                               {ticket.is_used ? '✓ Ашигласан' : '○ Ашиглаагүй'}
                             </span>
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                       <div className="border-t border-gray-200 pt-2 mt-2">
                         <p className={`text-sm text-gray-700 ${gabriela.className}`}>
