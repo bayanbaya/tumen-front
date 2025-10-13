@@ -13,10 +13,10 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      DOMAIN: ${DOMAIN}
-      BACKEND_ORIGIN: ${BACKEND_ORIGIN}
+      DOMAIN: tumensugalaa.mn
+      BACKEND_ORIGIN: http://172.17.0.1:3000
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # хостын 3000 руу хүрэх
+      - "backend:172.17.0.1"    # хостын 3000 руу хүрэх
     volumes:
       - caddy_data:/data
       - caddy_config:/config

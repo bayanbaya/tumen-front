@@ -6,6 +6,10 @@ tumensugalaa.mn, www.tumensugalaa.mn {
   @api path /api/*
   handle @api {
     uri strip_prefix /api
-    reverse_proxy {$BACKEND_ORIGIN}
+    reverse_proxy {$BACKEND_ORIGIN} {
+      header_up Host {upstream_hostport}
+      header_up X-Forwarded-Proto {scheme}
+      header_up X-Forwarded-For {remote}
+    }
   }
 }
