@@ -31,7 +31,10 @@ export default function RootLayout({
         <head /> will contain the components returned by the nearest parent
         head.js. Find out more at https://beta.nextjs.org/docs/api-reference/file-conventions/head
       */}
-      <head />
+      <head>
+        <link rel="icon" href="/images/logo/tumen-logo.png" />
+        <link rel="apple-touch-icon" href="/images/logo/tumen-logo.png" />
+      </head>
 
       <body className={`bg-[#FCFCFC] dark:bg-black ${inter.className} ${lobster.variable} ${vollkorn.variable}`}>
         <Providers>

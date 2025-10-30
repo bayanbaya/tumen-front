@@ -379,9 +379,9 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
           </svg>
         </button>
 
-        <div className="text-center">
+        <div className="text-center pt-20">
           {!isSubmitted && (
-            <div className="mb-6">
+            <div className="mb-6 ">
               {/* <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
                 <svg className="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -509,61 +509,112 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
                   Төлбөр төлөх
                 </h5>
                 
-                {/* QR Code */}
-                <div className="flex justify-center">
-                  <div className="bg-white p-4 rounded-lg shadow-sm">
-                    {invoiceData?.qr_image ? (
-                      <img
-                        src={`data:image/png;base64,${invoiceData.qr_image}`}
-                        alt="QR Code"
-                        className="w-32 h-32"
-                      />
-                    ) : (
-                      <div className="w-32 h-32 flex items-center justify-center text-gray-500">
-                        {isLoadingPurchase ? 'Уншиж байна...' : 'QR байхгүй'}
+                {/* QR Code (hide when paid) */}
+                {(() => {
+                  const msg = (checkResult?.message || '').toString();
+                  const status = (checkResult?.payment_status || '').toString().toUpperCase();
+                  const paid = status === 'PAID' || checkResult?.PAID === true || checkResult?.paid === true || checkResult?.success === true || /төлөгдсөн/i.test(msg);
+                  if (paid) return null;
+                  return (
+                    <div className="flex justify-center">
+                      <div className="bg-white p-4 rounded-lg shadow-sm">
+                        {invoiceData?.qr_image ? (
+                          <img
+                            src={`data:image/png;base64,${invoiceData.qr_image}`}
+                            alt="QR Code"
+                            className="w-32 h-32"
+                          />
+                        ) : (
+                          <div className="w-32 h-32 flex items-center justify-center text-gray-500">
+                            {isLoadingPurchase ? 'Уншиж байна...' : 'QR байхгүй'}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  
-                </div>
-                <div className="flex flex-col items-center gap-4 p-4">
-                  <button
-                    onClick={handleCheckPayment}
-                    disabled={!invoiceData?.invoice_id || isCheckingPayment}
-                    className={`rounded-full px-8 py-3 text-base sm:text-lg font-semibold text-white transition-all ${
-                      isCheckingPayment || !invoiceData?.invoice_id
-                        ? 'bg-gray-300 cursor-not-allowed'
-                        : 'bg-primary hover:bg-primary/90 hover:scale-105'
-                    } ${gabriela.className}`}
-                  >
-                    {isCheckingPayment ? 'Шалгаж байна...' : 'Төлбөр шалгах'}
-                  </button>
-                  {checkResult && (
-                    <p className={`text-base sm:text-lg font-semibold ${checkResult?.paid ? 'text-green-600' : 'text-amber-600'} ${gabriela.className}`}>
-                      {checkResult?.paid === true ? 'Төлбөр ТӨЛӨГДСӨН' : checkResult?.message || 'Хүлээгдэж байна'}
-                    </p>
-                  )}
-                </div>
-                {/* Bank Payment Options */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 pt-2">
-                  {(invoiceData?.urls || []).map((bank, index) => (
-                    <button
-                      key={index}
-                      className="flex items-center p-3 bg-white rounded-lg border hover:bg-gray-50 transition-colors text-left"
-                      onClick={() => window.open(bank.link, '_blank')}
-                    >
-                      <img src={bank.logo} alt={bank.name} className="w-8 h-8 rounded mr-3 flex-shrink-0" />
-                      <div className="text-left">
-                        {/* <div className={`text-sm sm:text-base font-medium text-gray-900 ${gabriela.className}`}>
-                          {bank.name}
-                        </div> */}
-                        <div className={`text-xs sm:text-sm text-gray-500 ${gabriela.className}`}>
-                          {bank.description}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                  );
+                })()}
+                <h1 className={`text-base p-4 text-gray-600 ${gabriela.className}`}>Та дараах QR код уншуулах юмуу банкны апп дээр төлөх боломжтой</h1>
+                
+                {(() => {
+                  const msg = (checkResult?.message || '').toString();
+                  const status = (checkResult?.payment_status || '').toString().toUpperCase();
+                  const paid = status === 'PAID' || checkResult?.PAID === true || checkResult?.paid === true || checkResult?.success === true || /төлөгдсөн/i.test(msg);
+                  return (
+                    <div className="flex flex-col items-center gap-4 p-4">
+                      {!paid && (
+                        <button
+                          onClick={handleCheckPayment}
+                          disabled={!invoiceData?.invoice_id || isCheckingPayment}
+                          className={`rounded-full px-8 py-3 text-base sm:text-lg font-semibold text-white transition-all ${
+                            isCheckingPayment || !invoiceData?.invoice_id
+                              ? 'bg-gray-300 cursor-not-allowed'
+                              : 'bg-primary hover:bg-primary/90 hover:scale-105'
+                          } ${gabriela.className}`}
+                        >
+                          {isCheckingPayment ? 'Шалгаж байна...' : 'Төлбөр шалгах'}
+                        </button>
+                      )}
+                      {checkResult && (() => {
+                    const msg = (checkResult?.message || '').toString();
+                    const status = (checkResult?.payment_status || '').toString().toUpperCase();
+                    const paid =
+                      status === 'PAID' ||
+                      checkResult?.PAID === true ||
+                      checkResult?.paid === true ||
+                      checkResult?.success === true ||
+                      /төлөгдсөн/i.test(msg);
+
+                    const text = paid
+                      ? (msg || 'Төлбөр төлөгдсөн байна.')
+                      : (msg || 'Хүлээгдэж байна. Ахин шалгана уу');
+
+                    const isPending = /хүлээгд/i.test(text) || status === 'PENDING';
+                    const color = paid ? 'text-green-600' : (isPending ? 'text-yellow-600' : 'text-amber-600');
+
+                    return (
+                      <p className={`text-base sm:text-lg font-semibold ${color} ${gabriela.className}`}>
+                        {paid ? (
+                          <>
+                            <span className="block">Төлбөр төлөгдсөн байна.</span>
+                            <span className="block text-black">Бид таны утасны дугаарлуу мэссэж илгээсэн.</span>
+                          </>
+                        ) : (
+                          text
+                        )}
+                      </p>
+                    );
+                      })()}
+                    </div>
+                  );
+                })()}
+                {/* Bank Payment Options (hide when paid) */}
+                {(() => {
+                  const msg = (checkResult?.message || '').toString();
+                  const status = (checkResult?.payment_status || '').toString().toUpperCase();
+                  const paid = status === 'PAID' || checkResult?.PAID === true || checkResult?.paid === true || checkResult?.success === true || /төлөгдсөн/i.test(msg);
+                  if (paid) return null;
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 pt-2">
+                      {(invoiceData?.urls || []).map((bank, index) => (
+                        <button
+                          key={index}
+                          className="flex items-center p-3 bg-white rounded-lg border hover:bg-gray-50 transition-colors text-left"
+                          onClick={() => window.open(bank.link, '_blank')}
+                        >
+                          <img src={bank.logo} alt={bank.name} className="w-8 h-8 rounded mr-3 flex-shrink-0" />
+                          <div className="text-left">
+                            {/* <div className={`text-sm sm:text-base font-medium text-gray-900 ${gabriela.className}`}>
+                              {bank.name}
+                            </div> */}
+                            <div className={`text-xs sm:text-sm text-gray-500 ${gabriela.className}`}>
+                              {bank.description}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
                 
                 {purchaseError && (
                   <p className={`text-sm text-red-600 ${gabriela.className}`}>{purchaseError}</p>
@@ -641,12 +692,12 @@ const Hero = () => {
                     >
                       🔥 Сугалаа шалгах
                     </button>
-                    {/* <button
+                    <button
                      onClick={() => setIsPurchaseModalOpen(true)}
-                      className={`rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm px-16 py-6 text-xl font-bold text-white duration-300 ease-in-out hover:bg-white/20 hover:border-white/50 hover:scale-105 transform transition-all ${gabriela.className}`}
+                     className={`rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm px-16 py-6 text-xl font-bold text-white duration-300 ease-in-out hover:bg-white/20 hover:border-white/50 hover:scale-105 transform transition-all ${gabriela.className}`}
                     >
                       Сугалаа авах
-                    </button> */}
+                    </button>
                 </div>
               </div>
             </div>
