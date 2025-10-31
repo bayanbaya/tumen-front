@@ -430,7 +430,7 @@ const LotteryPurchaseModal = ({ isOpen, onClose }) => {
                 </label>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   {[
-                    { amount: 100, image: "/images/aztan/20k.png", title: "20,000₮" },
+                    { amount: 20200, image: "/images/aztan/20k.png", title: "20,000₮" },
                     { amount: 40400, image: "/images/aztan/40k.png", title: "40,000₮" },
                     { amount: 60600, image: "/images/aztan/60k.png", title: "60,000₮" },
                     { amount: 101000, image: "/images/aztan/100k.png", title: "100,000₮" }
