@@ -1,5 +1,4 @@
-import AboutSectionOne from "@/components/About/AboutSectionOne";
-import AboutSectionTwo from "@/components/About/AboutSectionTwo";
+
 import Breadcrumb from "@/components/Common/Breadcrumb";
 
 import { Metadata } from "next";
@@ -17,8 +16,6 @@ const AboutPage = () => {
         pageName="Бидний тухай"
         description="Монгол улсын хамгийн анхны Автомашины тусгай зөвшөөрөлтэй сугалаа.."
       />
-      {/* <AboutSectionOne /> */}
-      <AboutSectionTwo />
     </>
   );
 };

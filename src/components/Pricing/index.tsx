@@ -10,7 +10,7 @@ const ImageZoomModal = ({ isOpen, onClose, imageSrc, imageAlt }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
@@ -55,51 +55,51 @@ const Pricing = () => {
         imageAlt={zoomModal.imageAlt}
       />
       <section id="pricing" className="relative z-10 py-16 md:py-20 lg:py-28">
-      
-      {/* Tickets Table at the top */}
-      <TicketsTable />
-      
-      <div className="container">
-        <div className="text-center mb-16">
-          
-          <h1 className="text-4xl font-bold text-black dark:text-white mb-4" style={{ fontFamily: 'var(--font-vollkorn), serif' }}>
-            Сугалаанд оролцох заавар
-          </h1>
 
-        
-        </div>
-        </div>
+        {/* Tickets Table at the top */}
+        <TicketsTable />
 
-      <div className="container">
-        <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-          <div className="w-full flex justify-center">
-            <img 
-              src="images/video/7.jpg" 
-              alt="Pricing Option 1"
-              className="w-full h-[500px] object-cover rounded-sm shadow-lg cursor-pointer hover:scale-120 transition-transform duration-300"
-              onClick={() => handleImageClick("images/video/5.jpg", "Pricing Option 1")}
-            />
-          </div>
-          <div className="w-full flex justify-center">
-            <img 
-              src="images/video/14.jpg" 
-              alt="Pricing Option 2"
-              className="w-full h-[500px] object-cover rounded-sm shadow-lg cursor-pointer hover:scale-120 transition-transform duration-300"
-              onClick={() => handleImageClick("images/video/14.jpg", "Pricing Option 2")}
-            />
-          </div>
-          <div className="w-full flex justify-center">
-            <img 
-              src="images/video/15.jpg" 
-              alt="Pricing Option 3"
-              className="w-full h-[500px] object-cover rounded-sm shadow-lg cursor-pointer hover:scale-120 transition-transform duration-300"
-              onClick={() => handleImageClick("images/video/15.jpg", "Pricing Option 3")}
-            />
+        {/* <div className="container">
+          <div className="text-center mb-16">
+
+            <h1 className="text-4xl font-bold text-black dark:text-white mb-4" style={{ fontFamily: 'var(--font-vollkorn), serif' }}>
+              Сугалаанд оролцох заавар
+            </h1>
+
+
           </div>
         </div>
-      </div>
 
-    </section>
+        <div className="container">
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+            <div className="w-full flex justify-center">
+              <img
+                src="images/video/7.jpg"
+                alt="Pricing Option 1"
+                className="w-full h-[500px] object-cover rounded-sm shadow-lg cursor-pointer hover:scale-120 transition-transform duration-300"
+                onClick={() => handleImageClick("images/video/5.jpg", "Pricing Option 1")}
+              />
+            </div>
+            <div className="w-full flex justify-center">
+              <img
+                src="images/video/14.jpg"
+                alt="Pricing Option 2"
+                className="w-full h-[500px] object-cover rounded-sm shadow-lg cursor-pointer hover:scale-120 transition-transform duration-300"
+                onClick={() => handleImageClick("images/video/14.jpg", "Pricing Option 2")}
+              />
+            </div>
+            <div className="w-full flex justify-center">
+              <img
+                src="images/video/15.jpg"
+                alt="Pricing Option 3"
+                className="w-full h-[500px] object-cover rounded-sm shadow-lg cursor-pointer hover:scale-120 transition-transform duration-300"
+                onClick={() => handleImageClick("images/video/15.jpg", "Pricing Option 3")}
+              />
+            </div>
+          </div>
+        </div> */}
+
+      </section>
     </>
   );
 };

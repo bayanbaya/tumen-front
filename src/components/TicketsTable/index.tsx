@@ -1,273 +1,303 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Gabriela } from "next/font/google";
+import { useState, useEffect, useRef } from "react";
+import { Search, Trophy, Calendar, Tag } from "lucide-react";
 
-const gabriela = Gabriela({ 
-  subsets: ["latin"],
-  weight: "400",
-});
+// Fake data - өөр өөр өдрүүдийн сугалаанууд
+const generateFakeData = () => {
+  const data = [];
+  const phones = ["99119911", "88228822", "77337733", "99889988", "95559555", "98887777", "91234567"];
+  
+  // 7 хоногийн өмнө - 4 сугалаа
+  data.push({
+    phone_number: "99119911",
+    tickets: [
+      { number: "F-1001", name: "Toyota Prado", created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+      { number: "F-1002", name: "Lexus LX600", created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+      { number: "F-1003", name: "Mercedes G-Class", created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+      { number: "F-1004", name: "Range Rover", created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+    ],
+  });
+
+  // Өнөөдөр - 2 сугалаа
+  data.push({
+    phone_number: "99119911",
+    tickets: [
+      { number: "F-2001", name: "BMW X7", created_at: new Date().toISOString() },
+      { number: "F-2002", name: "Toyota Prado", created_at: new Date().toISOString() },
+    ],
+  });
+
+  // Бусад сугалаанууд
+  for (let i = 0; i < 50; i++) {
+    const phone = phones[Math.floor(Math.random() * phones.length)];
+    const ticketCount = Math.floor(Math.random() * 5) + 1;
+    const daysAgo = Math.floor(Math.random() * 30);
+    const tickets = [];
+    
+    for (let j = 0; j < ticketCount; j++) {
+      tickets.push({
+        number: `F-${3000 + i * 10 + j}`,
+        name: ["Toyota Prado", "Lexus LX600", "Mercedes G-Class", "Range Rover", "BMW X7"][Math.floor(Math.random() * 5)],
+        created_at: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+      });
+    }
+    
+    data.push({ phone_number: phone, tickets });
+  }
+
+  return data;
+};
 
 interface Ticket {
-  id: number;
   number: string;
-  phone_number: string;
   name: string;
-  is_bonus: boolean;
-  is_used: boolean;
   created_at: string;
 }
 
-interface TicketsData {
-  total: number;
+interface GroupedTicket {
+  phone_number: string;
   tickets: Ticket[];
 }
 
-const TicketsTable = () => {
-  const [ticketsData, setTicketsData] = useState<TicketsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+export default function TicketsTable() {
+  const [allData, setAllData] = useState<GroupedTicket[]>([]);
+  const [displayed, setDisplayed] = useState<GroupedTicket[]>([]);
+  const [filtered, setFiltered] = useState<GroupedTicket[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchTickets();
+    setTimeout(() => {
+      const data = generateFakeData();
+      // Group by phone and date
+      const grouped: { [key: string]: GroupedTicket } = {};
+      
+      data.forEach(item => {
+        const date = new Date(item.tickets[0].created_at).toDateString();
+        const key = `${item.phone_number}-${date}`;
+        
+        if (grouped[key]) {
+          grouped[key].tickets.push(...item.tickets);
+        } else {
+          grouped[key] = { ...item };
+        }
+      });
+
+      const sorted = Object.values(grouped).sort((a, b) => 
+        new Date(b.tickets[0].created_at).getTime() - new Date(a.tickets[0].created_at).getTime()
+      );
+
+      setAllData(sorted);
+      setDisplayed(sorted.slice(0, 10));
+      setFiltered(sorted.slice(0, 10));
+      setLoading(false);
+    }, 800);
   }, []);
 
-  const fetchTickets = async () => {
-    try {
-      setIsLoading(true);
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.BACKEND_API_URL || 'http://localhost:3000';
-      const onGhPages = !!process.env.NEXT_PUBLIC_BASE_PATH; // true only for GitHub Pages builds
-      const endpoint = onGhPages ? `${backendUrl}/lottery/recent` : '/api/lottery/recent';
-      const response = await fetch(endpoint);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch tickets');
-      }
-      
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      setTicketsData(data);
-    } catch (err: any) {
-      setError(err.message || 'Алдаа гарлаа');
-      console.error('Error fetching tickets:', err);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    const term = search.toLowerCase();
+    if (!term) {
+      setFiltered(displayed);
+      return;
+    }
+
+    const searchResults = allData.filter(
+      (group) =>
+        group.phone_number.includes(term) ||
+        group.tickets.some(
+          (t) =>
+            t.number.toLowerCase().includes(term) ||
+            t.name.toLowerCase().includes(term)
+        )
+    );
+    setFiltered(searchResults);
+  }, [search, displayed, allData]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (search) return; // Don't load more when searching
+    
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5 && !loadingMore && hasMore) {
+      loadMore();
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('mn-MN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const loadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      const currentLength = displayed.length;
+      const nextBatch = allData.slice(currentLength, currentLength + 20);
+      
+      if (nextBatch.length === 0) {
+        setHasMore(false);
+      } else {
+        setDisplayed(prev => [...prev, ...nextBatch]);
+      }
+      setLoadingMore(false);
+    }, 500);
   };
 
-  const formatPhoneNumber = (phone: string) => {
-    // Format phone number as XX XX XX XX
-    return phone.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diffTime = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Өнөөдөр";
+    if (diffDays === 1) return "Өчигдөр";
+    if (diffDays < 7) return `${diffDays} хоногийн өмнө`;
+    
+    const months = ["1-р", "2-р", "3-р", "4-р", "5-р", "6-р", "7-р", "8-р", "9-р", "10-р", "11-р", "12-р"];
+    return `${months[d.getMonth()]} сарын ${d.getDate()}`;
   };
 
-  // Pagination
-  const totalPages = ticketsData ? Math.ceil(ticketsData.tickets.length / itemsPerPage) : 0;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentTickets = ticketsData?.tickets.slice(startIndex, endIndex) || [];
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="container py-8">
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container py-8">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
-          <p className={`text-red-600 dark:text-red-400 ${gabriela.className}`}>
-            ❌ {error}
-          </p>
+      <div className="w-full px-4 py-8">
+        <div className="bg-gradient-to-br from-black via-gray-900 to-black rounded-2xl p-6 border border-white/10">
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" />
+            <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce delay-100" />
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200" />
+          </div>
+          <p className="text-white/60 text-center mt-3 text-sm">Уншиж байна...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container py-8">
-      <div className="bg-white dark:bg-gray-dark rounded-lg shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary/90 to-primary px-4 sm:px-6 py-4">
-          <h2 className={`text-xl sm:text-2xl font-bold text-white ${gabriela.className}`}>
-            🎫 Сүүлийн 20 сугалаа
-          </h2>
-          {/* <p className={`text-white/90 text-sm mt-1 ${gabriela.className}`}>
-            Нийт: {ticketsData?.total || 0} сугалаа
-          </p> */}
-        </div>
+    <div className="w-full px-4 py-8">
+      {/* Header */}
+      <div className="mb-6 text-center">
+        <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text mb-2">
+          Сүүлийн сугалаанууд
+        </h2>
+        <p className="text-white/50 text-sm">Шинээр бүртгэгдсэн сугалаанууд</p>
+      </div>
 
-        {/* Desktop Table View - Hidden on mobile */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-100 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700">
-              <tr>
-                <th className={`px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider ${gabriela.className}`}>
-                  #
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider ${gabriela.className}`}>
-                  Сугалааны дугаар
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider ${gabriela.className}`}>
-                  Утасны дугаар
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider ${gabriela.className}`}>
-                  Машин
-                </th>
-                <th className={`px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider ${gabriela.className}`}>
-                  Огноо
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {currentTickets.map((ticket, index) => (
-                <tr 
-                  key={ticket.id}
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                    ticket.is_bonus ? 'bg-yellow-50/30 dark:bg-yellow-900/10' : ''
-                  }`}
-                >
-                  <td className={`px-4 py-3 text-sm text-gray-600 dark:text-gray-400 ${gabriela.className}`}>
-                    {startIndex + index + 1}
-                  </td>
-                  <td className={`px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-300 ${gabriela.className}`}>
-                    {ticket.number}
-                  </td>
-                  <td className={`px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-300 ${gabriela.className}`}>
-                    {ticket.phone_number}
-                  </td>
-                  <td className={`px-4 py-3 text-sm font-medium text-gray-900 dark:text-white ${gabriela.className}`}>
-                    {ticket.name}
-                  </td>
-                  <td className={`px-4 py-3 text-xs text-gray-600 dark:text-gray-400 ${gabriela.className}`}>
-                    {formatDate(ticket.created_at)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile Card View - Visible only on mobile */}
-        <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
-          {currentTickets.map((ticket, index) => (
-            <div 
-              key={ticket.id}
-              className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                ticket.is_bonus ? 'bg-yellow-50/30 dark:bg-yellow-900/10' : ''
-              }`}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <span className={`text-xs font-bold text-gray-500 dark:text-gray-400 ${gabriela.className}`}>
-                  #{startIndex + index + 1}
-                </span>
-                {/* {ticket.is_bonus && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                    🎁 Бонус
-                  </span>
-                )} */}
-              </div>
-              
-              <div className="space-y-2">
-                <div>
-                  <p className={`text-xs text-gray-500 dark:text-gray-400 ${gabriela.className}`}>
-                    Сугалааны дугаар
-                  </p>
-                  <p className={`text-lg font-bold text-gray-900 dark:text-white ${gabriela.className}`}>
-                    {ticket.number}
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className={`text-xs text-gray-500 dark:text-gray-400 ${gabriela.className}`}>
-                      Утас
-                    </p>
-                    <p className={`text-sm font-medium text-gray-900 dark:text-gray-300 ${gabriela.className}`}>
-                      {ticket.phone_number}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className={`text-xs text-gray-500 dark:text-gray-400 ${gabriela.className}`}>
-                      Машин
-                    </p>
-                    <p className={`text-sm font-medium text-gray-900 dark:text-white ${gabriela.className}`}>
-                      {ticket.name}
-                    </p>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className={`text-xs text-gray-500 dark:text-gray-400 ${gabriela.className}`}>
-                    Огноо
-                  </p>
-                  <p className={`text-xs text-gray-600 dark:text-gray-400 ${gabriela.className}`}>
-                    {formatDate(ticket.created_at)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="bg-gray-50 dark:bg-gray-800 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200 dark:border-gray-700">
-            <div className={`text-xs sm:text-sm text-gray-700 dark:text-gray-300 ${gabriela.className}`}>
-              Хуудас <span className="font-medium">{currentPage}</span> / <span className="font-medium">{totalPages}</span>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+      {/* Main Card */}
+      <div className="bg-gradient-to-br from-black via-gray-900 to-black rounded-2xl overflow-hidden border border-white/10">
+        
+        {/* Search Bar */}
+        <div className="p-4 border-b border-white/5">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Утас, дугаар, машин хайх..."
+              className="w-full pl-10 pr-3 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-purple-500/50 transition-all"
+            />
+            {search && (
               <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
-                  currentPage === 1
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-600'
-                    : 'bg-primary text-white hover:bg-primary/90'
-                } ${gabriela.className}`}
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white text-sm"
               >
-                <span className="hidden sm:inline">← Өмнөх</span>
-                <span className="sm:hidden">←</span>
+                ✕
               </button>
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
-                  currentPage === totalPages
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-600'
-                    : 'bg-primary text-white hover:bg-primary/90'
-                } ${gabriela.className}`}
-              >
-                <span className="hidden sm:inline">Дараах →</span>
-                <span className="sm:hidden">→</span>
-              </button>
-            </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* List */}
+        <div 
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="max-h-[70vh] overflow-y-auto"
+        >
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 bg-white/5 rounded-full flex items-center justify-center">
+                <Search className="w-6 h-6 text-white/30" />
+              </div>
+              <p className="text-white/40 text-sm">Илэрц олдсонгүй</p>
+            </div>
+          ) : (
+            <>
+              {filtered.map((group, idx) => (
+                <div
+                  key={`${group.phone_number}-${idx}`}
+                  className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+                >
+                  {/* Mobile First Layout */}
+                  <div className="p-4 space-y-3">
+                    {/* Header: Phone + Count */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center border border-white/10 flex-shrink-0">
+                          <span className="text-white/80 font-black text-sm">{idx + 1}</span>
+                        </div>
+                        <div>
+                          <div className="text-white font-mono font-bold text-lg">{group.phone_number}</div>
+                          <div className="flex items-center gap-2 text-white/50 text-xs mt-0.5">
+                            <Calendar className="w-3 h-3" />
+                            <span>{formatDate(group.tickets[0].created_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full">
+                        <Tag className="w-4 h-4 text-blue-300" />
+                        <span className="text-blue-300 font-bold text-sm">{group.tickets.length}</span>
+                      </div>
+                    </div>
+
+                    {/* Tickets Grid */}
+                    <div className="space-y-1.5">
+                      {group.tickets.map((ticket, tidx) => (
+                        <div
+                          key={tidx}
+                          className="flex items-center gap-2 p-3 bg-white/5 rounded-lg border border-white/5"
+                        >
+                          <span className="text-purple-400 font-mono font-bold text-sm flex-shrink-0">{ticket.number}</span>
+                          <span className="text-white/40 text-xs">•</span>
+                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <Trophy className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />
+                            <span className="text-white/80 text-sm truncate">{ticket.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Loading More Indicator */}
+              {loadingMore && (
+                <div className="p-4 text-center">
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200" />
+                  </div>
+                </div>
+              )}
+
+              {/* No More Data */}
+              {!hasMore && !search && (
+                <div className="p-4 text-center text-white/40 text-sm">
+                  Бүх сугалааг харууллаа
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 py-3 bg-white/5 border-t border-white/5">
+          <div className="text-center text-xs text-white/60">
+            {search ? (
+              <>Илэрц: <span className="font-bold text-white">{filtered.reduce((sum, g) => sum + g.tickets.length, 0)}</span> сугалаа</>
+            ) : (
+              <>Харуулж байгаа: <span className="font-bold text-white">{displayed.length}</span> / {allData.length} бүлэг</>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default TicketsTable;
-
+}
