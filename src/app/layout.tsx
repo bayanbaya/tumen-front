@@ -40,8 +40,9 @@ export default function RootLayout({
         <Providers>
           <Header />
           {children}
-          <Footer />
+          
           <ScrollToTop />
+          <Footer />
         </Providers>
       </body>
     </html>

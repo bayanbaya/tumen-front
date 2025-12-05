@@ -132,9 +132,21 @@ export default function TicketsTable() {
         {/* Header */}
         <div className="mb-6 text-center">
           <h2 className="text-2xl sm:text-3xl font-black text-orange-600">
-            Сүүлийн сугалаанууд
+            Шууд сугалаанууд
           </h2>
-          <p className="text-orange-400 text-sm">Шинээр бүртгэгдсэн сугалаанууд</p>
+          <div className="mt-4 mx-auto  bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 rounded-lg p-3 shadow-md">
+            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 flex items-start justify-center text-left">
+              {/* Икон ашиглан анхааруулгыг илүү тодотгосон */}
+              <span className="text-xl mr-2 mt-0.5" role="img" aria-label="warning">
+                ⚠️
+              </span>
+              <span>
+                АНХААРУУЛГА: Манай систем шинэчлэгдсэнтэй холбоотойгоор мессежээр сугалааны код илгээгдэхгүй.
+                <br className="hidden sm:block" />
+                Та доорх талбараас сугалаагаа шалгана уу.
+              </span>
+            </p>
+          </div>
         </div>
 
         {/* Search */}
@@ -196,7 +208,7 @@ export default function TicketsTable() {
                   {group.tickets.map((ticket, tidx) => (
                     <div
                       key={tidx}
-                                            className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg border border-orange-200"
+                      className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg border border-orange-200"
                     >
                       <span className="text-orange-700 font-mono font-bold text-sm">
                         {ticket.number}
@@ -221,11 +233,10 @@ export default function TicketsTable() {
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded-md border ${
-                  currentPage === i + 1
+                className={`px-3 py-1 rounded-md border ${currentPage === i + 1
                     ? "bg-orange-600 text-white border-orange-600"
                     : "bg-white text-orange-700 border-orange-300 hover:bg-orange-50"
-                }`}
+                  }`}
               >
                 {i + 1}
               </button>

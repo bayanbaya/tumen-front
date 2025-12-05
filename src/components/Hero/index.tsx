@@ -185,10 +185,10 @@ const BuyLotteryModal = ({ isOpen, onClose }: any) => {
   const [checkResult, setCheckResult] = useState<any>(null);
 
   const packages = [
-    { amount: 20200, label: "20K", tickets: "2 сугалаа" },
-    { amount: 40400, label: "40K", tickets: "4 сугалаа" },
-    { amount: 60600, label: "60K", tickets: "6 сугалаа" },
-    { amount: 101000, label: "100K", tickets: "10 сугалаа", popular: true },
+    { amount: 20202, label: "20K", tickets: "1 сугалаа" },
+    { amount: 40404, label: "40K", tickets: "2 сугалаа" },
+    { amount: 60606, label: "60K", tickets: "3 сугалаа" },
+    { amount: 101010, label: "100K", tickets: "4 сугалаа", popular: true },
   ];
 
   const handlePhoneChange = (val: string) => {
@@ -289,7 +289,7 @@ const BuyLotteryModal = ({ isOpen, onClose }: any) => {
               >
                 <div className="text-2xl font-black text-white">{pkg.label}</div>
                 <div className="text-sm text-white/70">{pkg.tickets}</div>
-                {pkg.popular && <div className="text-xs text-yellow-400 mt-1">⭐ Алдартай</div>}
+                {pkg.popular && <div className="text-xs text-yellow-400 mt-1">⭐ Аялалын эрх</div>}
               </button>
             ))}
           </div>
@@ -384,7 +384,6 @@ const BuyLotteryModal = ({ isOpen, onClose }: any) => {
   );
 };
 
-// ✅ Hero Section
 export default function Hero() {
   const [checkModal, setCheckModal] = useState(false);
   const [buyModal, setBuyModal] = useState(false);
@@ -406,12 +405,12 @@ export default function Hero() {
           className="absolute inset-0 bg-cover bg-center transition-transform duration-300"
           style={{ 
             backgroundImage: "url('images/hero/prado150.jpg')",
-            transform: `translate(${mousePos.x * 0.008}px, ${mousePos.y * 0.008}px) scale(1.05)`,
+            transform: `translate(${mousePos.x * 0.009}px, ${mousePos.y * 0.009}px) scale(1.05)`,
             filter: "brightness(0.35)"
           }}
         />
 
-        <div className="relative z-10 text-center px-4">
+       <div className="relative z-10 text-center px-4 max-w-[90%] lg:max-w-none mx-auto">
           <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500/30 via-orange-500/30 to-red-500/30 backdrop-blur-2xl border-2 border-yellow-400/50 rounded-full mb-8 animate-fade-in shadow-[0_0_30px_rgba(251,191,36,0.25)]">
             <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
             <span className="text-sm font-black text-transparent bg-gradient-to-r from-yellow-100 via-orange-100 to-yellow-100 bg-clip-text tracking-wide">
@@ -419,7 +418,8 @@ export default function Hero() {
             </span>
           </div>
 
-          <h1 className="text-6xl font-black text-white mb-4">
+          
+            <h1 className="text-4xl lg:text-6xl font-black text-white mb-4">
             Автомашины <span className="text-red-500">Сугалаа</span>
           </h1>
           
@@ -446,7 +446,7 @@ export default function Hero() {
           <div className="max-w-2xl mx-auto mb-8">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
               <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-bold text-white/80">🎯 Сугалааны дүүргэлт</span>
+                <span className="text-sm font-bold text-white/80">🎯 Сугалааны дүүргэлт PRODA-150</span>
                 <span className="text-sm font-black text-white">50%</span>
               </div>
               
@@ -473,8 +473,8 @@ export default function Hero() {
 
           <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
             {[
-              { icon: TrendingUp, number: "10К+", label: "Оролцогч", color: "from-red-400 to-orange-500" },
-              { icon: Trophy, number: "50+", label: "Машин", color: "from-purple-400 to-pink-500" },
+              { icon: TrendingUp, number: "100К+", label: "Оролцогч", color: "from-red-400 to-orange-500" },
+              { icon: Trophy, number: "30+", label: "Машин", color: "from-purple-400 to-pink-500" },
               { icon: Shield, number: "100%", label: "Найдвартай", color: "from-blue-400 to-cyan-500" },
             ].map((stat, i) => {
               const Icon = stat.icon;
