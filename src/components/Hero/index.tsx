@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, Sparkles, ChevronRight, Zap, TrendingUp, Trophy, Shield } from 'lucide-react';
 
 // ✅ Typing animation hook
-const useTypingAnimation = (text: string, speed = 100) => {
+const useTypingAnimation = (text, speed = 100) => {
   const [displayed, setDisplayed] = useState("");
   useEffect(() => {
     let i = 0;
@@ -19,7 +19,7 @@ const useTypingAnimation = (text: string, speed = 100) => {
 };
 
 // ✅ Modal Wrapper - X товч ажиллана
-const Modal = ({ isOpen, onClose, children }: any) =>
+const Modal = ({ isOpen, onClose, children }) =>
   !isOpen ? null : (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in"
@@ -41,14 +41,14 @@ const Modal = ({ isOpen, onClose, children }: any) =>
   );
 
 // ✅ Сугалаа шалгах Modal - Backend холбогдсон
-const CheckLotteryModal = ({ isOpen, onClose }: any) => {
+const CheckLotteryModal = ({ isOpen, onClose }) => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ticketData, setTicketData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [ticketData, setTicketData] = useState(null);
+  const [error, setError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const handlePhoneChange = (val: string) => {
+  const handlePhoneChange = (val) => {
     const digits = val.replace(/\D/g, "");
     if (digits.length <= 8) {
       setPhone(digits);
@@ -84,7 +84,7 @@ const CheckLotteryModal = ({ isOpen, onClose }: any) => {
       
       setTicketData(data);
       setSubmitted(true);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Алдаа гарлаа. Дахин оролдоно уу.');
       console.error('API Error:', err);
     } finally {
@@ -138,7 +138,7 @@ const CheckLotteryModal = ({ isOpen, onClose }: any) => {
 
           {ticketData?.tickets && ticketData.tickets.length > 0 ? (
             <div className="max-h-64 overflow-y-auto space-y-3">
-              {ticketData.tickets.map((ticket: any, i: number) => (
+              {ticketData.tickets.map((ticket, i) => (
                 <div key={ticket.id} className={`p-4 rounded-xl border-2 ${ticket.is_bonus ? 'bg-yellow-500/20 border-yellow-400' : 'bg-white/5 border-white/20'}`}>
                   <div className="flex justify-between items-center">
                     <div>
@@ -174,15 +174,15 @@ const CheckLotteryModal = ({ isOpen, onClose }: any) => {
 };
 
 // ✅ Сугалаа авах Modal - Payment шалгалттай
-const BuyLotteryModal = ({ isOpen, onClose }: any) => {
+const BuyLotteryModal = ({ isOpen, onClose }) => {
   const [phone, setPhone] = useState("");
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [invoiceData, setInvoiceData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [invoiceData, setInvoiceData] = useState(null);
+  const [error, setError] = useState(null);
   const [checking, setChecking] = useState(false);
-  const [checkResult, setCheckResult] = useState<any>(null);
+  const [checkResult, setCheckResult] = useState(null);
 
   const packages = [
     { amount: 20202, label: "20K", tickets: "1 сугалаа" },
@@ -191,7 +191,7 @@ const BuyLotteryModal = ({ isOpen, onClose }: any) => {
     { amount: 101010, label: "100K", tickets: "4 сугалаа", popular: true },
   ];
 
-  const handlePhoneChange = (val: string) => {
+  const handlePhoneChange = (val) => {
     const digits = val.replace(/\D/g, "");
     if (digits.length <= 8) {
       setPhone(digits);
@@ -226,7 +226,7 @@ const BuyLotteryModal = ({ isOpen, onClose }: any) => {
       const data = await resp.json();
       setInvoiceData(data);
       setSubmitted(true);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Алдаа гарлаа');
     } finally {
       setLoading(false);
@@ -339,7 +339,7 @@ const BuyLotteryModal = ({ isOpen, onClose }: any) => {
               <p className="text-sm text-white/70 text-center">QR код уншуулах эсвэл банкны апп ашиглана уу</p>
               
               <div className="grid grid-cols-2 gap-2">
-                {(invoiceData?.urls || []).map((bank: any, i: number) => (
+                {(invoiceData?.urls || []).map((bank, i) => (
                   <button
                     key={i}
                     onClick={() => window.open(bank.link, '_blank')}
@@ -390,7 +390,7 @@ export default function Hero() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    const move = (e: MouseEvent) => setMousePos({ x: e.clientX, y: e.clientY });
+    const move = (e) => setMousePos({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", move);
     return () => window.removeEventListener("mousemove", move);
   }, []);
@@ -401,6 +401,36 @@ export default function Hero() {
       <BuyLotteryModal isOpen={buyModal} onClose={() => setBuyModal(false)} />
 
       <section className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden">
+        
+        {/* --- Зөвхөн энэ CSS болон Гэрлийг л нэмлээ --- */}
+        <style>{`
+          @keyframes twinkle {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 20px currentColor; }
+          }
+          .christmas-light {
+            animation: twinkle 2s infinite ease-in-out;
+          }
+        `}</style>
+
+        {/* --- Hanging Christmas Lights --- */}
+        <div className="absolute top-0 left-0 right-0 z-30 flex justify-center space-x-8 sm:space-x-12 pointer-events-none">
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="relative">
+              {/* Wire */}
+              <div className="absolute top-0 left-1/2 w-0.5 h-8 bg-gray-700 -translate-x-1/2"></div>
+              {/* Bulb */}
+              <div 
+                className={`christmas-light w-4 h-6 rounded-full mt-8 ${
+                  ['bg-red-500', 'bg-yellow-400', 'bg-green-500', 'bg-blue-500'][i % 4]
+                }`}
+                style={{ animationDelay: `${i * 0.2}s` }}
+              ></div>
+            </div>
+          ))}
+        </div>
+        {/* ------------------------------------------- */}
+
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-300"
           style={{ 
