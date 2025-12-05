@@ -389,7 +389,6 @@ export default function Hero() {
   const [checkModal, setCheckModal] = useState(false);
   const [buyModal, setBuyModal] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const typedText = useTypingAnimation("Хүслийн хүлгээ, Түмэн сугалаанаас.", 80);
 
   useEffect(() => {
     const move = (e: MouseEvent) => setMousePos({ x: e.clientX, y: e.clientY });
@@ -425,7 +424,7 @@ export default function Hero() {
           </h1>
           
           <p className="text-xl text-gray-100 mb-6">
-            {typedText}<span className="text-red-400 animate-pulse">|</span>
+            {'Хүслийн хүлгээ, Түмэн сугалаанаас'}<span className="text-red-400 animate-pulse">|</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">

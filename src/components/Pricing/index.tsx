@@ -54,7 +54,7 @@ const Pricing = () => {
         imageSrc={zoomModal.imageSrc}
         imageAlt={zoomModal.imageAlt}
       />
-      <section id="pricing" className="relative z-10 py-16 md:py-20 lg:py-28">
+      <section id="pricing" className="relative z-10 ">
 
         {/* Tickets Table at the top */}
         <TicketsTable />

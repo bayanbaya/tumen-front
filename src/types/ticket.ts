@@ -4,12 +4,13 @@ type Author = {
   designation: string;
 };
 
+// types/ticket.ts
 export type Ticket = {
   id: number;
   title: string;
-  paragraph?: string;
   image: string;
-  author?: Author;
-  tags?: string[];
   publishDate: string;
+  paragraph?: string;  // optional болгох
+  author?: string;     // optional болгох
+  tags?: string[];     // optional болгох
 };
